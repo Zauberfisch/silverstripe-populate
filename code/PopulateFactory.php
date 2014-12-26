@@ -30,6 +30,7 @@ class PopulateFactory extends FixtureFactory {
 
 		// for files copy the source dir if the image has a 'PopulateFileFrom'
 		if(isset($data['PopulateFileFrom'])) {
+			/** @var Folder $folder */
 			$folder = Folder::find_or_make(
 				str_replace('assets/', '', dirname($data['Filename']))
 			);
@@ -100,6 +101,12 @@ class PopulateFactory extends FixtureFactory {
 			unset($latest['ID']);
 
 			$existing->update($latest);
+			if (isset($folder) && $existing->is_a('File')) {
+				/** @var File $existing */
+				$existing->setParentID($folder->ID);
+				// call SetName() to auto populate the Title if its not set
+				$existing->setName($existing->Name);
+			}
 			$existing->write();
 
 			$obj->delete();
@@ -111,6 +118,13 @@ class PopulateFactory extends FixtureFactory {
 		}
 		else {
 			$obj = parent::createObject($class, $identifier, $data);
+			if (isset($folder) && $obj->is_a('File')) {
+				/** @var File $obj */
+				$obj->setParentID($folder->ID);
+				// call SetName() to auto populate the Title if its not set
+				$obj->setName($obj->Name);
+			}
+			$obj->write();
 		}
 
 		if($obj->hasExtension('Versioned')) {
